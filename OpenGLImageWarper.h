@@ -33,38 +33,129 @@ warp image using 2D mesh grid
 // include opencv
 #include <opencv2/opencv.hpp>
 
-class OpenGLImageWarper {
-private:
-	// program ID
-	GLuint programID;
+namespace gl {
+	// cuda kernel
+	namespace OpenGLImageWarperKernel{
+		/**
+		@brief copy surface texture to OpenCV GPU mat
+		@param cudaSurfaceObject_t texture: input cuda surface object binded to rendered texture
+		@param cv::cuda::PtrStep<uchar3> img_d: output OpenCV GPU mat
+		@param int width: texture width
+		@param int height: texture height
+		@return int
+		*/
+		__global__ void copy_surface_to_gpumat(cudaSurfaceObject_t texture, cv::cuda::PtrStep<uchar3> img_d,
+			int width, int height);
+	}
 
-	// frame buffer ID
-	GLuint frameBufferID;
-public:
+	// opengl camera class
+	class GLCamParam {
+	public:
+		float x;
+		float y;
+		float z;
+		float camera_near;
+		float camera_far;
+		float fov;
+		float aspect;
+		glm::mat4 projection;
 
-private:
+		GLCamParam() : x(0), y(0), z(0), camera_near(0.1), camera_far(10.0 * 1500.0),
+			fov(90), aspect(1.0) {
+			projection = glm::perspective(glm::radians(fov), aspect,
+				camera_near, camera_far);
+		}
+		GLCamParam(float x, float y, float z, float aspect) {
+			this->x = x; this->y = y; this->z = z;
+			this->camera_near = 0.1; this->camera_far = 10.0 * 1500.0;
+			this->fov = 90; this->aspect = aspect;
+			projection = glm::perspective(glm::radians(fov), aspect,
+				camera_near, camera_far);
+		}
+		int reCalcProj() {
+			projection = glm::perspective(glm::radians(fov), aspect,
+				camera_near, camera_far);
+			return 0;
+		}
+		int project(float inputx, float inputy, float & outx, float & outy) {
+			float winWidth = z * 2 * aspect;
+			float winHeight = z * 2;
+			outx = (inputx - x) / winWidth + 0.5;
+			outy = (inputy - y) / winHeight + 0.5;
+			//printf("position :(%f, %f, %f) win size: (%f, %f)\n", x, y, z, winWidth, winHeight);
+			//printf("input :(%f, %f) output: (%f, %f)\n", inputx, inputy, outx, outy);
+			return 0;
+		}
+		~GLCamParam() {}
+	};
 
-public:
-	OpenGLImageWarper();
-	~OpenGLImageWarper();
+	// opengl image warper class
+	class OpenGLImageWarper {
+	private:
+		// window
+		GLFWwindow* window;
+		// camera
+		std::shared_ptr<GLCamParam> cameraPtr;
 
-	/**
-	@brief init function
-		init OpenGL for image warping
-	@return int
-	*/
-	int init();
+		// program ID
+		GLuint programID;
 
-	/**
-	@brief warp image
-	@param cv::Mat input: input image
-	@param cv::Mat & output: output image
-	@param cv::Size size: output size
-	@param cv::Mat mesh: input mesh used for warp
-	@return int
-	*/
-	int warp(cv::Mat input, cv::Mat & output, 
-		cv::Size size, cv::Mat mesh);
+		// frame buffer ID
+		GLuint frameBufferID;
+		// texture ID and size
+		GLuint inputTextureID;
+		cv::Size inputSize;
+		GLuint outputTextureID;
+		cv::Size outputSize;
+		// cuda texture object
+		cudaSurfaceObject_t inputCudaTextureSurfaceObj;
+		cudaSurfaceObject_t outputCudaTextureSurfaceObj;
+		// vertex array ID
+		GLuint vertexArrayID;
+		// vertex ID
+		GLuint vertexID;
+		// UV ID
+		GLuint uvID;
+
+	public:
+
+	private:
+		/**
+		@brief bind opengl texture to cuda surface
+		@param GLuint textureID: id of input opengl texture
+		@param cudaSurfaceObject_t & surfceObj: output cuda surface object  
+		@return int
+		*/
+		int bindToCudaSurface(GLuint textureID, cudaSurfaceObject_t & surfaceObj);
+
+	public:
+		OpenGLImageWarper();
+		~OpenGLImageWarper();
+
+		/**
+		@brief init function
+			init OpenGL for image warping
+		@return int
+		*/
+		int init();
+
+		/**
+		@brief warp image
+		@param cv::Mat input: input image
+		@param cv::Mat & output: output image
+		@param cv::Size size: output size
+		@param cv::Mat mesh: input mesh used for warp
+		@return int
+		*/
+		int warp(cv::Mat input, cv::Mat & output,
+			cv::Size size, cv::Mat mesh);
+
+		/**
+		@brief debug function
+		@return int
+		*/
+		int debug();
+	};
 };
 
 

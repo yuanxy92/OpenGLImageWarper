@@ -60,12 +60,15 @@ cuda_add_executable(${name}
     common/shader.cpp
     OpenGLImageWarper.h
     OpenGLImageWarper.cpp
+    OpenGLImageWarper.cu
 	main.cpp
 )
 
 target_link_libraries(${name}
 	${OPENGL_LIBRARY} # filled by "find_package(OpenGL REQUIRED)"
 	${GLFW_LIBRARY}
+	${GLEW_LIBRARY_DEBUG}
+	${GLEW_LIBRARY_RELEASE}
 	${OpenCV_LIBS}
 	${CUDA_LIBRARY} 	
 	${CUDA_npp_LIBRARY} 

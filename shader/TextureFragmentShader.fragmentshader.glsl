@@ -13,6 +13,7 @@ void main(){
 	//if (UV.x > 0 && UV.x < 1 && UV.y > 0 && UV.y < 1)
 	//	colorRGBA = vec4(1.0, 0.0, 0.0, 1.0);
 	// Output color = color of the texture at the specified UV
+	//colorRGBA = vec4(1.0f, 0.0f, 0.0f, 1.0f);
 	colorRGBA = texture( myTextureSampler, UV ).rgba;
 	if (colorRGBA.a < 0.95)
 		discard;
