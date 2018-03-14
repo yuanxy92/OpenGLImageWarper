@@ -46,6 +46,7 @@ namespace gl {
 		*/
 		__global__ void copy_surface_to_gpumat(cudaSurfaceObject_t texture, cv::cuda::PtrStep<uchar3> img_d,
 			int width, int height);
+
 	}
 
 	// opengl camera class
@@ -121,6 +122,25 @@ namespace gl {
 
 	private:
 		/**
+		@brief error callback function
+		@param int error: error id
+		@param const char* description: error description
+		@return int
+		*/
+		static void error_callback(int error, const char* description);
+
+		/**
+		@brief generate vertex and uv buffer from mesh grid
+		@param cv::Mat mesh: input mesh
+		@param GLfloat* vertexBuffer: output vertex buffer data
+		@param GLfloat* uvBuffer: output buffer data
+		@param cv::Size textureSize: input texture size
+		@return int
+		*/
+		int genVertexUVBufferData(cv::Mat mesh, GLfloat* vertexBuffer,
+			GLfloat* uvBuffer, cv::Size textureSize);
+
+		/**
 		@brief bind opengl texture to cuda surface
 		@param GLuint textureID: id of input opengl texture
 		@param cudaSurfaceObject_t & surfceObj: output cuda surface object  
@@ -140,6 +160,13 @@ namespace gl {
 		int init();
 
 		/**
+		@brief release function
+			release OpenGL buffers
+		@return int
+		*/
+		int release();
+
+		/**
 		@brief warp image
 		@param cv::Mat input: input image
 		@param cv::Mat & output: output image
@@ -149,6 +176,29 @@ namespace gl {
 		*/
 		int warp(cv::Mat input, cv::Mat & output,
 			cv::Size size, cv::Mat mesh);
+
+		/**
+		@brief warp image
+		@param cv::Mat input: input image
+		@param cv::Mat & output: output image
+		@param cv::Size size: output size
+		@param cv::Mat mesh: input mesh used for warp
+		@return int
+		*/
+		int warp8U(cv::Mat input, cv::Mat & output,
+			cv::Size size, cv::Mat mesh);
+
+		/**
+		@brief get rendered image
+		@return cv::Mat
+		*/
+		cv::Mat getWarpedImg();
+
+		/**
+		@brief get rendered image
+		@return cv::Mat
+		*/
+		cv::Mat getWarpedImg8U();
 
 		/**
 		@brief debug function

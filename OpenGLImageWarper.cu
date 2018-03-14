@@ -23,9 +23,43 @@ __global__ void OpenGLImageWarperKernel::copy_surface_to_gpumat(cudaSurfaceObjec
 	unsigned int y = blockIdx.y * blockDim.y + threadIdx.y;
 	if (x < width && y < height) {
 		uchar4 input;
-		surf2Dread(&input, texture, x * 4, height - y - 1);
+		surf2Dread(&input, texture, x * 4, y);
 		img_d.ptr(y)[x] = make_uchar3(input.z, input.y, input.x);
 	}
+}
+
+
+/**
+@brief get rendered image
+@return cv::Mat
+*/
+cv::Mat OpenGLImageWarper::getWarpedImg() {
+	cv::Mat img;
+	cv::cuda::GpuMat output_d(outputSize, CV_8UC3);
+	dim3 dimBlock(32, 32);
+	dim3 dimGrid((outputSize.width + dimBlock.x - 1) / dimBlock.x,
+		(outputSize.height + dimBlock.y - 1) / dimBlock.y);
+	OpenGLImageWarperKernel::copy_surface_to_gpumat << <dimGrid, dimBlock >> >(
+		outputCudaTextureSurfaceObj, output_d, outputSize.width, outputSize.height);
+	output_d.download(img);
+	return img;
+}
+
+/**
+@brief get rendered image
+@return cv::Mat
+*/
+cv::Mat OpenGLImageWarper::getWarpedImg8U() {
+	cv::Mat img;
+	cv::cuda::GpuMat output_d(outputSize, CV_8UC3);
+	dim3 dimBlock(32, 32);
+	dim3 dimGrid((outputSize.width + dimBlock.x - 1) / dimBlock.x,
+		(outputSize.height + dimBlock.y - 1) / dimBlock.y);
+	OpenGLImageWarperKernel::copy_surface_to_gpumat << <dimGrid, dimBlock >> >(
+		outputCudaTextureSurfaceObj, output_d, outputSize.width, outputSize.height);
+	cv::cuda::cvtColor(output_d, output_d, cv::COLOR_BGR2GRAY);
+	output_d.download(img);
+	return img;
 }
 
 /**
@@ -46,8 +80,8 @@ int OpenGLImageWarper::debug() {
 
 	// output
 	dim3 dimBlock2(32, 32);
-	dim3 dimGrid2((outputSize.width + dimBlock.x - 1) / dimBlock.x,
-		(outputSize.height + dimBlock.y - 1) / dimBlock.y);
+	dim3 dimGrid2((outputSize.width + dimBlock2.x - 1) / dimBlock2.x,
+		(outputSize.height + dimBlock2.y - 1) / dimBlock2.y);
 	OpenGLImageWarperKernel::copy_surface_to_gpumat << <dimGrid2, dimBlock2 >> >(
 		outputCudaTextureSurfaceObj, output_d, outputSize.width, outputSize.height);
 
