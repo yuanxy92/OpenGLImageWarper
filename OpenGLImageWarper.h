@@ -97,10 +97,8 @@ namespace gl {
 		GLFWwindow* window;
 		// camera
 		std::shared_ptr<GLCamParam> cameraPtr;
-
 		// program ID
 		GLuint programID;
-
 		// frame buffer ID
 		GLuint frameBufferID;
 		// texture ID and size
@@ -108,9 +106,6 @@ namespace gl {
 		cv::Size inputSize;
 		GLuint outputTextureID;
 		cv::Size outputSize;
-		// cuda texture object
-		cudaSurfaceObject_t inputCudaTextureSurfaceObj;
-		cudaSurfaceObject_t outputCudaTextureSurfaceObj;
 		// vertex array ID
 		GLuint vertexArrayID;
 		// vertex ID
@@ -140,14 +135,6 @@ namespace gl {
 		int genVertexUVBufferData(cv::Mat mesh, GLfloat* vertexBuffer,
 			GLfloat* uvBuffer, cv::Size textureSize);
 
-		/**
-		@brief bind opengl texture to cuda surface
-		@param GLuint textureID: id of input opengl texture
-		@param cudaSurfaceObject_t & surfceObj: output cuda surface object  
-		@return int
-		*/
-		int bindToCudaSurface(GLuint textureID, cudaSurfaceObject_t & surfaceObj);
-
 	public:
 		OpenGLImageWarper();
 		~OpenGLImageWarper();
@@ -176,29 +163,6 @@ namespace gl {
 		*/
 		int warp(cv::Mat input, cv::Mat & output,
 			cv::Size size, cv::Mat mesh);
-
-		/**
-		@brief warp image
-		@param cv::Mat input: input image
-		@param cv::Mat & output: output image
-		@param cv::Size size: output size
-		@param cv::Mat mesh: input mesh used for warp
-		@return int
-		*/
-		int warp8U(cv::Mat input, cv::Mat & output,
-			cv::Size size, cv::Mat mesh);
-
-		/**
-		@brief get rendered image
-		@return cv::Mat
-		*/
-		cv::Mat getWarpedImg();
-
-		/**
-		@brief get rendered image
-		@return cv::Mat
-		*/
-		cv::Mat getWarpedImg8U();
 
 		/**
 		@brief debug function
