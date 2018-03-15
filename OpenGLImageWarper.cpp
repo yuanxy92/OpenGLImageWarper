@@ -306,6 +306,7 @@ int OpenGLImageWarper::warp(cv::Mat input, cv::Mat & output,
 
 	delete[] uvBuffer;
 	delete[] vertexBuffer;
+	output = this->getWarpedImg();
 
 	return 0;
 }
@@ -430,6 +431,7 @@ int OpenGLImageWarper::warp8U(cv::Mat input, cv::Mat & output,
 
 	delete[] uvBuffer;
 	delete[] vertexBuffer;
+	output = this->getWarpedImg8U();
 
 	return 0;
 }
