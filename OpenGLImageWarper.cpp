@@ -177,12 +177,25 @@ int OpenGLImageWarper::genVertexUVBufferData(cv::Mat mesh, GLfloat* vertexBuffer
 			vertexBuffer[18 * num + 12] = bl.x; vertexBuffer[18 * num + 13] = bl.y; vertexBuffer[18 * num + 14] = 0;
 			vertexBuffer[18 * num + 15] = tl.x; vertexBuffer[18 * num + 16] = tl.y; vertexBuffer[18 * num + 17] = 0;
 
-			uvBuffer[12 * num + 0] = tluv.x; uvBuffer[12 * num + 1] = tluv.y;
-			uvBuffer[12 * num + 2] = truv.x; uvBuffer[12 * num + 3] = truv.y;
-			uvBuffer[12 * num + 4] = bruv.x; uvBuffer[12 * num + 5] = bruv.y;
-			uvBuffer[12 * num + 6] = bruv.x; uvBuffer[12 * num + 7] = bruv.y;
-			uvBuffer[12 * num + 8] = bluv.x; uvBuffer[12 * num + 9] = bluv.y;
-			uvBuffer[12 * num + 10] = tluv.x; uvBuffer[12 * num + 11] = tluv.y;
+			//uvBuffer[12 * num + 0] = tluv.x; uvBuffer[12 * num + 1] = tluv.y;
+			//uvBuffer[12 * num + 2] = truv.x; uvBuffer[12 * num + 3] = truv.y;
+			//uvBuffer[12 * num + 4] = bruv.x; uvBuffer[12 * num + 5] = bruv.y;
+			//uvBuffer[12 * num + 6] = bruv.x; uvBuffer[12 * num + 7] = bruv.y;
+			//uvBuffer[12 * num + 8] = bluv.x; uvBuffer[12 * num + 9] = bluv.y;
+			//uvBuffer[12 * num + 10] = tluv.x; uvBuffer[12 * num + 11] = tluv.y;
+
+			uvBuffer[12 * num + 0] = static_cast<float>(col) / static_cast<float>(mesh.cols - 1);
+			uvBuffer[12 * num + 1] = static_cast<float>(row) / static_cast<float>(mesh.rows - 1);
+			uvBuffer[12 * num + 2] = static_cast<float>(col + 1) / static_cast<float>(mesh.cols - 1);
+			uvBuffer[12 * num + 3] = static_cast<float>(row) / static_cast<float>(mesh.rows - 1);
+			uvBuffer[12 * num + 4] = static_cast<float>(col + 1) / static_cast<float>(mesh.cols - 1);
+			uvBuffer[12 * num + 5] = static_cast<float>(row + 1) / static_cast<float>(mesh.rows - 1);
+			uvBuffer[12 * num + 6] = static_cast<float>(col + 1) / static_cast<float>(mesh.cols - 1);
+			uvBuffer[12 * num + 7] = static_cast<float>(row + 1) / static_cast<float>(mesh.rows - 1);
+			uvBuffer[12 * num + 8] = static_cast<float>(col) / static_cast<float>(mesh.cols - 1);
+			uvBuffer[12 * num + 9] = static_cast<float>(row + 1) / static_cast<float>(mesh.rows - 1);
+			uvBuffer[12 * num + 10] = static_cast<float>(col) / static_cast<float>(mesh.cols - 1);
+			uvBuffer[12 * num + 11] = static_cast<float>(row) / static_cast<float>(mesh.rows - 1);
 
 			num++;
 		}
