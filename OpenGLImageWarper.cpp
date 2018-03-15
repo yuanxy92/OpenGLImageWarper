@@ -123,9 +123,7 @@ int OpenGLImageWarper::init() {
 	glGenBuffers(1, &uvID);
 	// generate frame buffer
 	glGenFramebuffers(1, &frameBufferID);
-	// generate textures
-	glGenTextures(1, &inputTextureID);
-	glGenTextures(1, &outputTextureID);
+	
 	return 0;
 }
 
@@ -139,8 +137,6 @@ int OpenGLImageWarper::release() {
 	glDeleteBuffers(1, &vertexID);
 	glDeleteBuffers(1, &uvID);
 	glDeleteFramebuffers(1, &frameBufferID);
-	glDeleteTextures(1, &inputTextureID);
-	glDeleteTextures(1, &outputTextureID);
 	return 0;
 }
 
@@ -224,6 +220,9 @@ int OpenGLImageWarper::warp(cv::Mat input, cv::Mat & output,
 		static_cast<float>(size.height);
 	cameraPtr->reCalcProj();
 
+	// generate textures
+	glGenTextures(1, &inputTextureID);
+	glGenTextures(1, &outputTextureID);
 	// generate input texture and upload input data into OpenGL texture
 	glBindTexture(GL_TEXTURE_2D, inputTextureID);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, input.cols, input.rows, 
@@ -321,6 +320,13 @@ int OpenGLImageWarper::warp(cv::Mat input, cv::Mat & output,
 	delete[] vertexBuffer;
 	output = this->getWarpedImg();
 
+	cudaDestroySurfaceObject(inputCudaTextureSurfaceObj);
+	cudaDestroySurfaceObject(outputCudaTextureSurfaceObj);
+	glDeleteTextures(1, &inputTextureID);
+	glDeleteTextures(1, &outputTextureID);
+	
+	cudaDeviceSynchronize();
+
 	return 0;
 }
 
@@ -349,6 +355,9 @@ int OpenGLImageWarper::warp8U(cv::Mat input, cv::Mat & output,
 	cv::Mat inputBGR;
 	cv::cvtColor(input, inputBGR, cv::COLOR_GRAY2BGR);
 
+	// generate textures
+	glGenTextures(1, &inputTextureID);
+	glGenTextures(1, &outputTextureID);
 	// generate input texture and upload input data into OpenGL texture
 	glBindTexture(GL_TEXTURE_2D, inputTextureID);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, inputBGR.cols, inputBGR.rows,
@@ -445,6 +454,13 @@ int OpenGLImageWarper::warp8U(cv::Mat input, cv::Mat & output,
 	delete[] uvBuffer;
 	delete[] vertexBuffer;
 	output = this->getWarpedImg8U();
+
+	cudaDestroySurfaceObject(inputCudaTextureSurfaceObj);
+	cudaDestroySurfaceObject(outputCudaTextureSurfaceObj);
+	glDeleteTextures(1, &inputTextureID);
+	glDeleteTextures(1, &outputTextureID);
+
+	cudaDeviceSynchronize();
 
 	return 0;
 }
