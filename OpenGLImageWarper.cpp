@@ -7,6 +7,9 @@ warp image using 2D mesh grid
 
 #include "OpenGLImageWarper.h"
 
+#include <thread>
+#include <chrono>
+
 using namespace gl;
 
 OpenGLImageWarper::OpenGLImageWarper() {}
@@ -56,7 +59,7 @@ int OpenGLImageWarper::init() {
 		fprintf(stderr, "Failed to initialize GLEW\n");
 		return -1;
 	}
-	// Dark blue background
+	// Black background
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	// Enable depth test
 	glEnable(GL_DEPTH_TEST);
@@ -94,7 +97,10 @@ int OpenGLImageWarper::release() {
 	glDeleteVertexArrays(1, &vertexArrayID);
 	glDeleteBuffers(1, &vertexID);
 	glDeleteBuffers(1, &uvID);
+	glDeleteTextures(1, &inputTextureID);
+	glDeleteTextures(1, &outputTextureID);
 	glDeleteFramebuffers(1, &frameBufferID);
+	glfwTerminate();
 	return 0;
 }
 
@@ -110,19 +116,30 @@ int OpenGLImageWarper::genVertexUVBufferData(cv::Mat mesh, GLfloat* vertexBuffer
 	GLfloat* uvBuffer, cv::Size textureSize) {
 	// calculate size
 	size_t num = 0;
+	cv::Mat mesh2;
+	mesh.convertTo(mesh2, CV_32F);
 	for (size_t row = 0; row < mesh.rows - 1; row++) {
 		for (size_t col = 0; col < mesh.cols - 1; col++) {
 			// calculate quad
 			cv::Point2f tl, tr, bl, br;
 			cv::Point2f tluv, truv, bluv, bruv;
-			tl = mesh.at<cv::Point2f>(row, col);
-			tr = mesh.at<cv::Point2f>(row, col + 1);
-			bl = mesh.at<cv::Point2f>(row + 1, col);
-			br = mesh.at<cv::Point2f>(row + 1, col + 1);
-			tluv = cv::Point2f(tl.x / textureSize.width, tl.y / textureSize.height);
-			truv = cv::Point2f(tr.x / textureSize.width, tr.y / textureSize.height);
-			bluv = cv::Point2f(bl.x / textureSize.width, bl.y / textureSize.height);
-			bruv = cv::Point2f(br.x / textureSize.width, br.y / textureSize.height);
+			tl = mesh2.at<cv::Point2f>(row, col);
+			tr = mesh2.at<cv::Point2f>(row, col + 1);
+			bl = mesh2.at<cv::Point2f>(row + 1, col);
+			br = mesh2.at<cv::Point2f>(row + 1, col + 1);
+
+			//printf("process control point:\n tl:(%f, %f)\ttr:(%f, %f)\tbl:(%f, %f)\tbr:(%f, %f)\n",
+			//	tl.x, tl.y, tr.x, tr.y, bl.x, bl.y, br.x, br.y);
+
+			tluv = cv::Point2f(tl.x / static_cast<float>(textureSize.width), 
+				tl.y / static_cast<float>(textureSize.height));
+			truv = cv::Point2f(tr.x / static_cast<float>(textureSize.width),
+				tr.y / static_cast<float>(textureSize.height));
+			bluv = cv::Point2f(bl.x / static_cast<float>(textureSize.width),
+				bl.y / static_cast<float>(textureSize.height));
+			bruv = cv::Point2f(br.x / static_cast<float>(textureSize.width),
+				br.y / static_cast<float>(textureSize.height));
+
 			// assign data to buffer
 			vertexBuffer[18 * num + 0] = tl.x; vertexBuffer[18 * num + 1] = tl.y; vertexBuffer[18 * num + 2] = 0;
 			vertexBuffer[18 * num + 3] = tr.x; vertexBuffer[18 * num + 4] = tr.y; vertexBuffer[18 * num + 5] = 0;
@@ -130,13 +147,6 @@ int OpenGLImageWarper::genVertexUVBufferData(cv::Mat mesh, GLfloat* vertexBuffer
 			vertexBuffer[18 * num + 9] = br.x; vertexBuffer[18 * num + 10] = br.y; vertexBuffer[18 * num + 11] = 0;
 			vertexBuffer[18 * num + 12] = bl.x; vertexBuffer[18 * num + 13] = bl.y; vertexBuffer[18 * num + 14] = 0;
 			vertexBuffer[18 * num + 15] = tl.x; vertexBuffer[18 * num + 16] = tl.y; vertexBuffer[18 * num + 17] = 0;
-
-			//uvBuffer[12 * num + 0] = tluv.x; uvBuffer[12 * num + 1] = tluv.y;
-			//uvBuffer[12 * num + 2] = truv.x; uvBuffer[12 * num + 3] = truv.y;
-			//uvBuffer[12 * num + 4] = bruv.x; uvBuffer[12 * num + 5] = bruv.y;
-			//uvBuffer[12 * num + 6] = bruv.x; uvBuffer[12 * num + 7] = bruv.y;
-			//uvBuffer[12 * num + 8] = bluv.x; uvBuffer[12 * num + 9] = bluv.y;
-			//uvBuffer[12 * num + 10] = tluv.x; uvBuffer[12 * num + 11] = tluv.y;
 
 			uvBuffer[12 * num + 0] = static_cast<float>(col) / static_cast<float>(mesh.cols - 1);
 			uvBuffer[12 * num + 1] = static_cast<float>(row) / static_cast<float>(mesh.rows - 1);
@@ -202,7 +212,7 @@ int OpenGLImageWarper::warp(cv::Mat input, cv::Mat & output,
 	size_t vertexBufferSize, uvBufferSize;
 	GLfloat* vertexBuffer;
 	GLfloat* uvBuffer;
-	cv::Size meshSize = mesh.size();
+	cv::Size meshSize = cv::Size(mesh.size().width - 1, mesh.size().height - 1);
 	size_t triangleNum = meshSize.area() * 2;
 	// generate buffer data
 	vertexBuffer = new GLfloat[triangleNum * 3 * 3];
@@ -269,14 +279,16 @@ int OpenGLImageWarper::warp(cv::Mat input, cv::Mat & output,
 	glfwSwapBuffers(window);
 	glfwPollEvents();
 
-	delete[] uvBuffer;
-	delete[] vertexBuffer;
-
 	char* pixels = new char[size.width * size.height * 4];
 	glReadPixels(0, 0, size.width, size.height, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
 	cv::Mat img(size, CV_8UC4, pixels);
 	cv::cvtColor(img, output, cv::COLOR_RGBA2BGR);
+
+	delete[] uvBuffer;
+	delete[] vertexBuffer;
 	delete[] pixels;
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	return 0;
 }
