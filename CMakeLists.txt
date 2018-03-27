@@ -1,9 +1,58 @@
-# CMake entry point.
-# Note that this CMakeLists.txt in fully independent from the one in the parent directory
-# (since that's the goal of this tutorial !)
+# CMake file for OpenGL 2d image warper
+# Author: Shane Yuan
+# E-mail: yuanxy92@gmail.com
+#
 
-# For an introduction to CMake, see
-# http://www.cmake.org/cmake/help/cmake_tutorial.html (at least steps 1 and 2)
+##
+##                     _oo0oo_
+##                    o8888888o
+##                    88" . "88
+##                    (| -_- |)
+##                    0\  =  /0
+##                  ___/`---'\___
+##                .' \\|     |// '.
+##               / \\|||  :  |||// \
+##              / _||||| -:- |||||- \
+##             |   | \\\  -  /// |   |
+##             | \_|  ''\---/''  |_/ |
+##             \  .-\__  '-'  ___/-. /
+##           ___'. .'  /--.--\  `. .'___
+##        ."" '<  `.___\_<|>_/___.' >' "".
+##       | | :  `- \`.;`\ _ /`;.`/ - ` : | |
+##       \  \ `_.   \_ __\ /__ _/   .-` /  /
+##   =====`-.____`.___ \_____/___.-`___.-'=====
+##                     `=---='
+##
+##             佛祖保佑         永无BUG
+##               Buddha Bless No Bug
+##
+
+message( 
+"##\n
+##                     _oo0oo_\n
+##                    o8888888o\n
+##                    88\" . \"88\n
+##                    (| -_- |)\n
+##                    0\\  =  /0\n
+##                  ___/`---'\\___\n
+##                .' \\\\|     |// '.\n
+##               / \\\\|||  :  |||// \\\n
+##              / _||||| -:- |||||- \\\n
+##             |   | \\\\\\  -  /// |   |\n
+##             | \\_|  ''\\---/''  |_/ |\n
+##             \\  .-\\__  '-'  ___/-. /\n
+##           ___'. .'  /--.--\\  `. .'___\n
+##        .\"\" '<  `.___\\_<|>_/___.' >' \"\".\n
+##       | | :  `- \\`.;`\\ _ /`;.`/ - ` : | |\n
+##       \\  \\ `_.   \\_ __\\ /__ _/   .-` /  /\n
+##   =====`-.____`.___ \\_____/___.-`___.-'=====\n
+##                     `=---='\n
+##\n
+##             佛祖保佑         永无BUG\n
+##               Buddha Bless No Bug\n
+##\n
+"
+)
 
 cmake_minimum_required (VERSION 3.10)
 set(name "OpenGLImageWarper")

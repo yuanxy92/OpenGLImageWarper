@@ -169,6 +169,15 @@ namespace gl {
 		@return int
 		*/
 		int debug();
+
+		/**
+		@brief transfer normal mesh to real size mesh
+		@param cv::Mat mesh: input CV_64FC2/CV_32FC2 mesh with normalized coordinates
+		@param int width: input real image width
+		@param int height: input real image height
+		@return cv::Mat: return CV_32FC2 mesh with real image size
+		*/
+		static cv::Mat meshNoraml2Real(cv::Mat mesh, int width, int height);
 	};
 };
 

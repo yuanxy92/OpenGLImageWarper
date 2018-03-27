@@ -26,6 +26,26 @@ void OpenGLImageWarper::error_callback(int error, const char* description) {
 }
 
 /**
+@brief transfer normal mesh to real size mesh
+@param cv::Mat mesh: input CV_64FC2/CV_32FC2 mesh with normalized coordinates
+@param int width: input real image width
+@param int height: input real image height
+@return cv::Mat: return CV_32FC2 mesh with real image size
+*/
+cv::Mat OpenGLImageWarper::meshNoraml2Real(cv::Mat mesh, int width, int height) {
+	cv::Mat meshout = mesh.clone();
+	meshout.convertTo(meshout, CV_32F);
+	for (size_t i = 0; i < meshout.rows; i++) {
+		for (size_t j = 0; j < meshout.cols; j++) {
+			cv::Point2f pt = meshout.at<cv::Point2f>(i, j);
+			meshout.at<cv::Point2f>(i, j) = cv::Point2f(pt.x * static_cast<float>(width),
+				pt.y * static_cast<float>(height));
+		}
+	}
+	return meshout;
+}
+
+/**
 @brief init function
 init OpenGL for image warping
 @return int
