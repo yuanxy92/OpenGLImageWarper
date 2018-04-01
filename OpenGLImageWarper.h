@@ -18,15 +18,7 @@ warp image using 2D mesh grid
 // include GLM
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-// include cuda
-#ifdef _WIN32
-#include <windows.h>
-#endif
-#include <cuda.h>
-#include <cuda_runtime.h>
-#include <cuda_gl_interop.h>
-#include <device_launch_parameters.h>
-#include <surface_functions.h>
+
 // include shader and texture loader
 #include <common/shader.hpp>
 
@@ -34,21 +26,6 @@ warp image using 2D mesh grid
 #include <opencv2/opencv.hpp>
 
 namespace gl {
-	// cuda kernel
-	namespace OpenGLImageWarperKernel{
-		/**
-		@brief copy surface texture to OpenCV GPU mat
-		@param cudaSurfaceObject_t texture: input cuda surface object binded to rendered texture
-		@param cv::cuda::PtrStep<uchar3> img_d: output OpenCV GPU mat
-		@param int width: texture width
-		@param int height: texture height
-		@return int
-		*/
-		__global__ void copy_surface_to_gpumat(cudaSurfaceObject_t texture, cv::cuda::PtrStep<uchar3> img_d,
-			int width, int height);
-
-	}
-
 	// opengl camera class
 	class GLCamParam {
 	public:
