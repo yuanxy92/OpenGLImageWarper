@@ -48,9 +48,11 @@ cv::Mat OpenGLImageWarper::meshNoraml2Real(cv::Mat mesh, int width, int height) 
 /**
 @brief init function
 init OpenGL for image warping
+@param std::string fragShaderName: fragment shader name
+@param std::string vertexShaderName: vertex shader name
 @return int
 */
-int OpenGLImageWarper::init() {
+int OpenGLImageWarper::init(std::string vertexShaderName, std::string fragShaderName) {
 	// Initialise GLFW
 	glfwSetErrorCallback(error_callback);
 	if (!glfwInit()) {
@@ -89,8 +91,7 @@ int OpenGLImageWarper::init() {
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	// load shader
-	programID = glshader::LoadShaders("E:\\Project\\OpenGLImageWarper\\shader\\TransformVertexShader.vertexshader.glsl", 
-		"E:\\Project\\OpenGLImageWarper\\shader\\TextureFragmentShader.fragmentshader.glsl");
+	programID = glshader::LoadShaders(vertexShaderName, fragShaderName);
 	// init camera
 	cameraPtr = std::make_shared<GLCamParam>();
 	// generate vertex arrays
