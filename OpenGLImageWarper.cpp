@@ -48,8 +48,8 @@ cv::Mat OpenGLImageWarper::meshNoraml2Real(cv::Mat mesh, int width, int height) 
 /**
 @brief init function
 init OpenGL for image warping
-@param std::string fragShaderName: fragment shader name
 @param std::string vertexShaderName: vertex shader name
+@param std::string fragShaderName: fragment shader name
 @return int
 */
 int OpenGLImageWarper::init(std::string vertexShaderName, std::string fragShaderName) {

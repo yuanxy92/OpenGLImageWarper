@@ -119,11 +119,11 @@ namespace gl {
 		/**
 		@brief init function
 			init OpenGL for image warping
-		@param std::string fragShaderName: fragment shader name
 		@param std::string vertexShaderName: vertex shader name
+		@param std::string fragShaderName: fragment shader name
 		@return int
 		*/
-		int init(std::string fragShaderName, std::string vertexShaderName);
+		int init(std::string vertexShaderName, std::string fragShaderName);
 
 		/**
 		@brief release function
