@@ -189,15 +189,90 @@ int OpenGLImageWarper::genVertexUVBufferData(cv::Mat mesh, GLfloat* vertexBuffer
 }
 
 /**
+@brief generate vertex and uv buffer from mesh grid
+@param cv::Mat mesh: input mesh
+@param GLfloat* vertexBuffer: output vertex buffer data
+@param GLfloat* uvBuffer: output buffer data
+@param cv::Size textureSize: input texture size
+@return int
+*/
+int OpenGLImageWarper::genVertexUVBufferDataBack(cv::Mat mesh, GLfloat* vertexBuffer,
+	GLfloat* uvBuffer, cv::Size textureSize) {
+	// calculate size
+	size_t num = 0;
+	cv::Mat mesh2;
+	mesh.convertTo(mesh2, CV_32F);
+	for (size_t row = 0; row < mesh.rows - 1; row++) {
+		for (size_t col = 0; col < mesh.cols - 1; col++) {
+			// calculate quad
+			cv::Point2f tl, tr, bl, br;
+			cv::Point2f tluv, truv, bluv, bruv;
+			tl = mesh2.at<cv::Point2f>(row, col);
+			tr = mesh2.at<cv::Point2f>(row, col + 1);
+			bl = mesh2.at<cv::Point2f>(row + 1, col);
+			br = mesh2.at<cv::Point2f>(row + 1, col + 1);
+
+			//printf("process control point:\n tl:(%f, %f)\ttr:(%f, %f)\tbl:(%f, %f)\tbr:(%f, %f)\n",
+			//	tl.x, tl.y, tr.x, tr.y, bl.x, bl.y, br.x, br.y);
+
+			tluv = cv::Point2f(tl.x / static_cast<float>(textureSize.width),
+				tl.y / static_cast<float>(textureSize.height));
+			truv = cv::Point2f(tr.x / static_cast<float>(textureSize.width),
+				tr.y / static_cast<float>(textureSize.height));
+			bluv = cv::Point2f(bl.x / static_cast<float>(textureSize.width),
+				bl.y / static_cast<float>(textureSize.height));
+			bruv = cv::Point2f(br.x / static_cast<float>(textureSize.width),
+				br.y / static_cast<float>(textureSize.height));
+
+			// assign data to buffer
+			vertexBuffer[18 * num + 0] = static_cast<float>(col) / static_cast<float>(mesh.cols - 1) * textureSize.width;
+			vertexBuffer[18 * num + 1] = static_cast<float>(row) / static_cast<float>(mesh.rows - 1) * textureSize.height;
+			vertexBuffer[18 * num + 2] = 0;
+			vertexBuffer[18 * num + 3] = static_cast<float>(col + 1) / static_cast<float>(mesh.cols - 1) * textureSize.width;
+			vertexBuffer[18 * num + 4] = static_cast<float>(row) / static_cast<float>(mesh.rows - 1) * textureSize.height;
+			vertexBuffer[18 * num + 5] = 0;
+			vertexBuffer[18 * num + 6] = static_cast<float>(col + 1) / static_cast<float>(mesh.cols - 1) * textureSize.width;
+			vertexBuffer[18 * num + 7] = static_cast<float>(row + 1) / static_cast<float>(mesh.rows - 1) * textureSize.height;
+			vertexBuffer[18 * num + 8] = 0;
+			vertexBuffer[18 * num + 9] = static_cast<float>(col + 1) / static_cast<float>(mesh.cols - 1) * textureSize.width;
+			vertexBuffer[18 * num + 10] = static_cast<float>(row + 1) / static_cast<float>(mesh.rows - 1) * textureSize.height;
+			vertexBuffer[18 * num + 11] = 0;
+			vertexBuffer[18 * num + 12] = static_cast<float>(col) / static_cast<float>(mesh.cols - 1) * textureSize.width;
+			vertexBuffer[18 * num + 13] = static_cast<float>(row + 1) / static_cast<float>(mesh.rows - 1) * textureSize.height;
+			vertexBuffer[18 * num + 14] = 0;
+			vertexBuffer[18 * num + 15] = static_cast<float>(col) / static_cast<float>(mesh.cols - 1) * textureSize.width;
+			vertexBuffer[18 * num + 16] = static_cast<float>(row) / static_cast<float>(mesh.rows - 1) * textureSize.height;
+			vertexBuffer[18 * num + 17] = 0;
+
+			uvBuffer[12 * num + 0] = tluv.x;
+			uvBuffer[12 * num + 1] = tluv.y;
+			uvBuffer[12 * num + 2] = truv.x;
+			uvBuffer[12 * num + 3] = truv.y;
+			uvBuffer[12 * num + 4] = bruv.x;
+			uvBuffer[12 * num + 5] = bruv.y;
+			uvBuffer[12 * num + 6] = bruv.x;
+			uvBuffer[12 * num + 7] = bruv.y;
+			uvBuffer[12 * num + 8] = bluv.x;
+			uvBuffer[12 * num + 9] = bluv.y;
+			uvBuffer[12 * num + 10] = tluv.x;
+			uvBuffer[12 * num + 11] = tluv.y;
+			num++;
+		}
+	}
+	return 0;
+}
+
+/**
 @brief warp image
 @param cv::Mat input: input image
 @param cv::Mat & output: output image
 @param cv::Size size: output size
 @param cv::Mat mesh: input mesh used for warp
+@param int direction: direction of warping
 @return int
 */
 int OpenGLImageWarper::warp(cv::Mat input, cv::Mat & output,
-	cv::Size size, cv::Mat mesh) {
+	cv::Size size, cv::Mat mesh, int direction) {
 	// get input and output size
 	inputSize = input.size();
 	outputSize = size;
@@ -215,6 +290,8 @@ int OpenGLImageWarper::warp(cv::Mat input, cv::Mat & output,
 		0, GL_BGR, GL_UNSIGNED_BYTE, input.data);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 
 	// generate frame buffer 
 	glBindFramebuffer(GL_FRAMEBUFFER, frameBufferID);
@@ -224,6 +301,8 @@ int OpenGLImageWarper::warp(cv::Mat input, cv::Mat & output,
 		0, GL_BGR, GL_UNSIGNED_BYTE, 0);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 	// bind output texture to frame buffer
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, outputTextureID, 0);
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
@@ -240,7 +319,17 @@ int OpenGLImageWarper::warp(cv::Mat input, cv::Mat & output,
 	uvBuffer = new GLfloat[triangleNum * 3 * 2];
 	vertexBufferSize = triangleNum * 3 * 3 * sizeof(float);
 	uvBufferSize = triangleNum * 3 * 2 * sizeof(float);
-	this->genVertexUVBufferData(mesh, vertexBuffer, uvBuffer, inputSize);
+	if (direction == 0) {
+		this->genVertexUVBufferData(mesh, vertexBuffer, uvBuffer, inputSize);
+	}
+	else if (direction == 1) {
+		this->genVertexUVBufferDataBack(mesh, vertexBuffer, uvBuffer, inputSize);
+	}
+	else {
+		std::cout << "ERROR::Input parameter:: only 0 and 1 are support for direction." << std::endl;
+		exit(-1);
+	}
+
 	glBindBuffer(GL_ARRAY_BUFFER, vertexID);
 	glBufferData(GL_ARRAY_BUFFER, vertexBufferSize, vertexBuffer, GL_STATIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, uvID);

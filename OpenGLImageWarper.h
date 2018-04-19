@@ -112,6 +112,17 @@ namespace gl {
 		int genVertexUVBufferData(cv::Mat mesh, GLfloat* vertexBuffer,
 			GLfloat* uvBuffer, cv::Size textureSize);
 
+		/**
+		@brief generate vertex and uv buffer from mesh grid
+		@param cv::Mat mesh: input mesh
+		@param GLfloat* vertexBuffer: output vertex buffer data
+		@param GLfloat* uvBuffer: output buffer data
+		@param cv::Size textureSize: input texture size
+		@return int
+		*/
+		int genVertexUVBufferDataBack(cv::Mat mesh, GLfloat* vertexBuffer,
+			GLfloat* uvBuffer, cv::Size textureSize);
+
 	public:
 		OpenGLImageWarper();
 		~OpenGLImageWarper();
@@ -138,10 +149,12 @@ namespace gl {
 		@param cv::Mat & output: output image
 		@param cv::Size size: output size
 		@param cv::Mat mesh: input mesh used for warp
+		@param int direction: direction of warping
+			0: warp forward, 1: warp backward
 		@return int
 		*/
 		int warp(cv::Mat input, cv::Mat & output,
-			cv::Size size, cv::Mat mesh);
+			cv::Size size, cv::Mat mesh, int direction = 0);
 
 		/**
 		@brief debug function
