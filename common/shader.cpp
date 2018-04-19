@@ -14,6 +14,10 @@ using namespace std;
 #include "shader.hpp"
 
 GLuint glshader::LoadShaders(std::string vertex_file_path, std::string fragment_file_path){
+
+	StringReplace(vertex_file_path, "/", "\\");
+	StringReplace(fragment_file_path, "/", "\\");
+
 	// Create the shaders
 	GLuint VertexShaderID = glCreateShader(GL_VERTEX_SHADER);
 	GLuint FragmentShaderID = glCreateShader(GL_FRAGMENT_SHADER);
@@ -95,6 +99,19 @@ GLuint glshader::LoadShaders(std::string vertex_file_path, std::string fragment_
 	glDeleteShader(FragmentShaderID);
 
 	return ProgramID;
+}
+
+void glshader::StringReplace(std::string & strBase, std::string strSrc, std::string strDes)
+{
+	std::string::size_type pos = 0;
+	std::string::size_type srcLen = strSrc.size();
+	std::string::size_type desLen = strDes.size();
+	pos = strBase.find(strSrc, pos);
+	while ((pos != std::string::npos))
+	{
+		strBase.replace(pos, srcLen, strDes);
+		pos = strBase.find(strSrc, (pos + desLen));
+	}
 }
 
 

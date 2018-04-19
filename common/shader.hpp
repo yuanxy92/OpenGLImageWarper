@@ -13,5 +13,8 @@ namespace glshader {
 	@return GLuint: shader program ID
 	*/
 	GLuint LoadShaders(std::string vertex_file_path, std::string fragment_file_path);
+
+	void StringReplace(std::string &strBase, std::string strSrc, std::string strDes);
+	
 }
 #endif
