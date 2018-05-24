@@ -75,12 +75,18 @@ int OpenGLImageWarper::init(std::string vertexShaderName, std::string fragShader
 	// hide window
 	// glfwHideWindow(window);
 
-	// Initialize GLEW
-	glewExperimental = true; // Needed for core profile
-	if (glewInit() != GLEW_OK) {
-		fprintf(stderr, "Failed to initialize GLEW\n");
-		return -1;
-	}
+	//// Initialize GLEW
+	//glewExperimental = true; // Needed for core profile
+	//if (glewInit() != GLEW_OK) {
+	//	fprintf(stderr, "Failed to initialize GLEW\n");
+	//	return -1;
+	//}
+
+	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+		throw std::runtime_error("Could not initialize GLAD!");
+	glGetError(); // pull and ignore unhandled errors like GL_INVALID_ENUM
+
+
 	// Black background
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	// Enable depth test

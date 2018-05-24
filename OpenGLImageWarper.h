@@ -11,10 +11,10 @@ warp image using 2D mesh grid
 // include stl
 #include <memory>
 #include <cstdlib>
-// include GLEW
-#include <GL/glew.h>
+// include GLAD
+#include <glad/glad.h>
 // include GLFW
-#include <glfw3.h>
+#include <GLFW/glfw3.h>
 // include GLM
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
