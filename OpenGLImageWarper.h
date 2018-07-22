@@ -14,7 +14,7 @@ warp image using 2D mesh grid
 // include GLEW
 #include <GL/glew.h>
 // include GLFW
-#include <glfw3.h>
+#include <GLFW/glfw3.h>
 // include GLM
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
