@@ -15,8 +15,12 @@ using namespace std;
 
 GLuint glshader::LoadShaders(std::string vertex_file_path, std::string fragment_file_path){
 
-	//StringReplace(vertex_file_path, "/", "\\");
-	//StringReplace(fragment_file_path, "/", "\\");
+#ifdef _WIN32
+
+	StringReplace(vertex_file_path, "/", "\\");
+	StringReplace(fragment_file_path, "/", "\\");
+
+#endif // _WIN32
 
 	// Create the shaders
 	GLuint VertexShaderID = glCreateShader(GL_VERTEX_SHADER);
