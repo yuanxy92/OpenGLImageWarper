@@ -156,6 +156,10 @@ namespace gl {
 		int warp(cv::Mat input, cv::Mat & output,
 			cv::Size size, cv::Mat mesh, int direction = 0);
 
+		template<typename T>
+		int warpSingle(cv::Mat input, cv::Mat & output,
+			cv::Size size, cv::Mat mesh, int direction = 0);
+
 		/**
 		@brief debug function
 		@return int
@@ -171,6 +175,185 @@ namespace gl {
 		*/
 		static cv::Mat meshNoraml2Real(cv::Mat mesh, int width, int height);
 	};
+
+	template<typename T>
+	inline int OpenGLImageWarper::warpSingle(cv::Mat input, cv::Mat & output, cv::Size size, cv::Mat mesh, int direction)
+	{
+		if (!(std::is_same<unsigned char, T>::value || std::is_same<unsigned short, T>::value || std::is_same<float, T>::value || std::is_same<unsigned int, T>::value))
+		{
+			std::cout <<
+				"Only uchar, ushort, uint or float is supported in single mode" <<
+				std::endl;
+			return -1;
+		}
+		// get input and output size
+		inputSize = input.size();
+		outputSize = size;
+		// adjust camera position
+		cameraPtr->x = size.width / 2;
+		cameraPtr->y = size.height / 2;
+		cameraPtr->z = size.height / 2;
+		cameraPtr->aspect = static_cast<float>(size.width) /
+			static_cast<float>(size.height);
+		cameraPtr->reCalcProj();
+
+		// generate input texture and upload input data into OpenGL texture
+		glBindTexture(GL_TEXTURE_2D, inputTextureID);
+		unsigned int dataType;
+
+		if (std::is_same<unsigned char, T>::value)
+		{
+			dataType = GL_UNSIGNED_BYTE;
+		}
+		else if (std::is_same<unsigned short, T>::value)
+		{
+			dataType = GL_UNSIGNED_SHORT;
+		}
+		else if (std::is_same<unsigned int, T>::value)
+		{
+			dataType = GL_UNSIGNED_INT;
+		}
+		else
+		{
+			dataType = GL_FLOAT;
+		}
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, input.cols, input.rows,
+			0, GL_RED, dataType, input.data);
+		
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+
+		// generate frame buffer 
+		glBindFramebuffer(GL_FRAMEBUFFER, frameBufferID);
+		// generate output texture
+		glBindTexture(GL_TEXTURE_2D, outputTextureID);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, size.width, size.height,
+			0, GL_BGR, GL_UNSIGNED_BYTE, 0);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+		// bind output texture to frame buffer
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, outputTextureID, 0);
+		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+			std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
+		}
+
+		size_t vertexBufferSize, uvBufferSize;
+		GLfloat* vertexBuffer;
+		GLfloat* uvBuffer;
+		cv::Size meshSize = cv::Size(mesh.size().width - 1, mesh.size().height - 1);
+		size_t triangleNum = meshSize.area() * 2;
+		// generate buffer data
+		vertexBuffer = new GLfloat[triangleNum * 3 * 3];
+		uvBuffer = new GLfloat[triangleNum * 3 * 2];
+		vertexBufferSize = triangleNum * 3 * 3 * sizeof(float);
+		uvBufferSize = triangleNum * 3 * 2 * sizeof(float);
+		if (direction == 0) {
+			this->genVertexUVBufferData(mesh, vertexBuffer, uvBuffer, inputSize);
+		}
+		else if (direction == 1) {
+			this->genVertexUVBufferDataBack(mesh, vertexBuffer, uvBuffer, inputSize);
+		}
+		else {
+			std::cout << "ERROR::Input parameter:: only 0 and 1 are support for direction." << std::endl;
+			exit(-1);
+		}
+
+		glBindBuffer(GL_ARRAY_BUFFER, vertexID);
+		glBufferData(GL_ARRAY_BUFFER, vertexBufferSize, vertexBuffer, GL_STATIC_DRAW);
+		glBindBuffer(GL_ARRAY_BUFFER, uvID);
+		glBufferData(GL_ARRAY_BUFFER, uvBufferSize, uvBuffer, GL_STATIC_DRAW);
+
+		// draw mesh
+		// Render to the fbo
+		glBindFramebuffer(GL_FRAMEBUFFER, frameBufferID);
+		glViewport(0, 0, size.width, size.height);
+		// Clear the screen
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		// Use our shader
+		GLuint matrixInShader = glGetUniformLocation(programID, "MVP");
+		GLuint textureInShader = glGetUniformLocation(programID, "myTextureSampler");
+		// in the "MVP" uniform
+		glm::mat4 View = glm::lookAt(
+			glm::vec3(cameraPtr->x, cameraPtr->y, cameraPtr->z), // camera position 
+			glm::vec3(cameraPtr->x, cameraPtr->y, 0), // look at position 
+			glm::vec3(0, 1, 0)  // head is up (set to 0,-1,0 to look upside-down)
+		);
+		glm::mat4 Model = glm::mat4(1.0);
+		glm::mat4 MVP = cameraPtr->projection * View * Model;
+
+		glUseProgram(programID);
+		glUniformMatrix4fv(matrixInShader, 1, GL_FALSE, &MVP[0][0]);
+		// bind texture
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, this->inputTextureID);
+		glUniform1i(textureInShader, 0);
+		// 1st attribute buffer : vertexs 
+		glEnableVertexAttribArray(0);
+		glBindBuffer(GL_ARRAY_BUFFER, vertexID);
+		glVertexAttribPointer(
+			0,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
+			3,                  // size
+			GL_FLOAT,           // type
+			GL_FALSE,           // normalized?
+			0,                  // stride
+			(void*)0            // array buffer offset
+		);
+		// 2nd attribute buffer : UVs
+		glEnableVertexAttribArray(1);
+		glBindBuffer(GL_ARRAY_BUFFER, uvID);
+		glVertexAttribPointer(
+			1,                                // attribute. No particular reason for 1, but must match the layout in the shader.
+			2,                                // size : U+V => 2
+			GL_FLOAT,                         // type
+			GL_FALSE,                         // normalized?
+			0,                                // stride
+			(void*)0                          // array buffer offset
+		);
+		// Draw the triangles
+		glDrawArrays(GL_TRIANGLES, 0, triangleNum * 3); // 2*3 indices starting at 0 -> 2 triangles
+		glDisableVertexAttribArray(0);
+		glDisableVertexAttribArray(1);
+
+		glfwSwapBuffers(window);
+		glfwPollEvents();
+
+		T* pixels = new T[size.width * size.height];
+		glReadPixels(0, 0, size.width, size.height, GL_RED, dataType, pixels);
+		cv::Mat img;// (size, CV_8UC4, pixels);
+		if (std::is_same<unsigned char, T>::value)
+		{
+			cv::Mat tmp(size, CV_8U, pixels);
+			img = tmp.clone();
+		}
+		else if (std::is_same<unsigned short, T>::value)
+		{
+			cv::Mat tmp(size, CV_16U, pixels);
+			img = tmp.clone();
+		}
+		else if (std::is_same<unsigned int, T>::value)
+		{
+			cv::Mat tmp(size, CV_32S, pixels);
+			img = tmp.clone();
+		}
+		else
+		{
+			cv::Mat tmp(size, CV_32F, pixels);
+			img = tmp.clone();
+		}
+		//cv::cvtColor(img, output, cv::COLOR_RGBA2BGR);
+		output = img.clone();
+		delete[] uvBuffer;
+		delete[] vertexBuffer;
+		delete[] pixels;
+
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+		return 0;
+	}
 };
 
 
