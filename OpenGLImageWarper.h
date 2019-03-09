@@ -158,7 +158,7 @@ namespace gl {
 
 		template<typename T>
 		int warpSingle(cv::Mat input, cv::Mat & output,
-			cv::Size size, cv::Mat mesh, int direction = 0);
+			cv::Size size, cv::Mat mesh, int direction = 0, int interpolation = GL_LINEAR);//GL_NEAREST
 
 		/**
 		@brief debug function
@@ -177,7 +177,7 @@ namespace gl {
 	};
 
 	template<typename T>
-	inline int OpenGLImageWarper::warpSingle(cv::Mat input, cv::Mat & output, cv::Size size, cv::Mat mesh, int direction)
+	inline int OpenGLImageWarper::warpSingle(cv::Mat input, cv::Mat & output, cv::Size size, cv::Mat mesh, int direction, int interpolation)
 	{
 		if (!(std::is_same<unsigned char, T>::value || std::is_same<unsigned short, T>::value || std::is_same<float, T>::value || std::is_same<unsigned int, T>::value))
 		{
@@ -220,8 +220,8 @@ namespace gl {
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, input.cols, input.rows,
 			0, GL_RED, dataType, input.data);
 		
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, interpolation);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, interpolation);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 
@@ -231,8 +231,8 @@ namespace gl {
 		glBindTexture(GL_TEXTURE_2D, outputTextureID);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, size.width, size.height,
 			0, GL_BGR, GL_UNSIGNED_BYTE, 0);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, interpolation);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, interpolation);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 		// bind output texture to frame buffer
