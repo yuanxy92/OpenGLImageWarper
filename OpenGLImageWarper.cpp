@@ -12,6 +12,31 @@ warp image using 2D mesh grid
 
 using namespace gl;
 
+const std::string OpenGLImageWarper::_defalutVertexShader =
+" \
+			#version 450 core\n\
+			layout(location = 0) in vec3 vertexPosition_modelspace;\n\
+			layout(location = 1) in vec2 vertexUV;\n\
+			out vec2 UV;\n\
+			uniform mat4 MVP;\n\
+			void main() \n\
+			{\n\
+				gl_Position = MVP * vec4(vertexPosition_modelspace, 1);\n\
+				UV = vertexUV;\n\
+			}\n\
+			";
+const std::string OpenGLImageWarper::_defalutFragmentShader =
+" \
+			#version 450 core\n\
+			in vec2 UV;\n\
+			out vec4 colorRGBA;\n\
+			uniform sampler2D myTextureSampler;\n\
+			void main() \n\
+			{\n\
+				colorRGBA = texture(myTextureSampler, UV);\n\
+			}\n\
+			";
+
 OpenGLImageWarper::OpenGLImageWarper() {}
 OpenGLImageWarper::~OpenGLImageWarper() {}
 
@@ -52,7 +77,7 @@ init OpenGL for image warping
 @param std::string fragShaderName: fragment shader name
 @return int
 */
-int OpenGLImageWarper::init(std::string vertexShaderName, std::string fragShaderName) {
+int OpenGLImageWarper::init(std::string vertexShaderName, std::string fragShaderName, ShaderLoadMode mode) {
 	// Initialise GLFW
 	glfwSetErrorCallback(error_callback);
 	if (!glfwInit()) {
@@ -91,7 +116,10 @@ int OpenGLImageWarper::init(std::string vertexShaderName, std::string fragShader
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	// load shader
-	programID = glshader::LoadShaders(vertexShaderName, fragShaderName);
+	if (mode == ShaderLoadMode::FilePath)
+		programID = glshader::LoadShaders(vertexShaderName, fragShaderName);
+	else if (mode == ShaderLoadMode::Content)
+		programID = glshader::CreateShaders(vertexShaderName, fragShaderName);
 	// init camera
 	cameraPtr = std::make_shared<GLCamParam>();
 	// generate vertex arrays

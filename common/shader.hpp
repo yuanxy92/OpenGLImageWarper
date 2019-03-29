@@ -14,6 +14,15 @@ namespace glshader {
 	*/
 	GLuint LoadShaders(std::string vertex_file_path, std::string fragment_file_path);
 
+	/**
+	@brief function to create glsl shaders
+	include vertex shader and fragment shader
+	@param std::string vertex: vertex shader
+	@param std::string fragment: fragment shader
+	@return GLuint: shader program ID
+	*/
+	GLuint CreateShaders(std::string vertex, std::string fragment);
+
 	void StringReplace(std::string &strBase, std::string strSrc, std::string strDes);
 	
 }

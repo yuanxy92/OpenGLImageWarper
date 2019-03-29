@@ -91,7 +91,14 @@ namespace gl {
 		GLuint uvID;
 
 	public:
+		static const std::string _defalutVertexShader;
+		static const std::string _defalutFragmentShader;
 
+		enum class ShaderLoadMode
+		{
+			FilePath = 0,
+			Content = 1
+		};
 	private:
 		/**
 		@brief error callback function
@@ -130,11 +137,11 @@ namespace gl {
 		/**
 		@brief init function
 			init OpenGL for image warping
-		@param std::string vertexShaderName: vertex shader name
-		@param std::string fragShaderName: fragment shader name
+		@param std::string vertexShaderName: vertex shader 
+		@param std::string fragShaderName: fragment shader 
 		@return int
 		*/
-		int init(std::string vertexShaderName, std::string fragShaderName);
+		int init(std::string vertexShaderName, std::string fragShaderName, ShaderLoadMode mode = ShaderLoadMode::FilePath);
 
 		/**
 		@brief release function
@@ -174,6 +181,12 @@ namespace gl {
 		@return cv::Mat: return CV_32FC2 mesh with real image size
 		*/
 		static cv::Mat meshNoraml2Real(cv::Mat mesh, int width, int height);
+
+		template<typename T>
+		static T getImgSubpix(const cv::Mat& img, cv::Point2f pt);
+
+		template<typename T>
+		static T getImgSubPixNormalized(const cv::Mat& img, cv::Point2f pt);
 	};
 
 	template<typename T>
@@ -353,6 +366,21 @@ namespace gl {
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 		return 0;
+	}
+
+	template<typename T>
+	inline T OpenGLImageWarper::getImgSubpix(const cv::Mat & img, cv::Point2f pt)
+	{
+		cv::Mat patch;
+		cv::remap(img, patch, cv::Mat(1, 1, CV_32FC2, &pt), cv::noArray(),
+			cv::INTER_LINEAR, cv::BORDER_CONSTANT, cv::Scalar(0));
+		return patch.at<T>(0, 0);
+	}
+
+	template<typename T>
+	inline T OpenGLImageWarper::getImgSubPixNormalized(const cv::Mat & img, cv::Point2f pt)
+	{
+		return getImgSubpix<T>(img, cv::Point2f(pt.x * img.cols, pt.y *img.rows));
 	}
 };
 
