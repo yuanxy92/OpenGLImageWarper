@@ -183,10 +183,10 @@ namespace gl {
 		static cv::Mat meshNoraml2Real(cv::Mat mesh, int width, int height);
 
 		template<typename T>
-		static T getImgSubpix(const cv::Mat& img, cv::Point2f pt);
+		static T getImgSubpix(const cv::Mat& img, cv::Point2f pt, cv::BorderTypes type = cv::BORDER_CONSTANT);
 
 		template<typename T>
-		static T getImgSubPixNormalized(const cv::Mat& img, cv::Point2f pt);
+		static T getImgSubPixNormalized(const cv::Mat& img, cv::Point2f pt, cv::BorderTypes type = cv::BORDER_CONSTANT);
 	};
 
 	template<typename T>
@@ -369,18 +369,18 @@ namespace gl {
 	}
 
 	template<typename T>
-	inline T OpenGLImageWarper::getImgSubpix(const cv::Mat & img, cv::Point2f pt)
+	inline T OpenGLImageWarper::getImgSubpix(const cv::Mat & img, cv::Point2f pt, cv::BorderTypes type)
 	{
 		cv::Mat patch;
 		cv::remap(img, patch, cv::Mat(1, 1, CV_32FC2, &pt), cv::noArray(),
-			cv::INTER_LINEAR, cv::BORDER_CONSTANT, cv::Scalar(0));
+			cv::INTER_LINEAR, type, cv::Scalar(0));
 		return patch.at<T>(0, 0);
 	}
 
 	template<typename T>
-	inline T OpenGLImageWarper::getImgSubPixNormalized(const cv::Mat & img, cv::Point2f pt)
+	inline T OpenGLImageWarper::getImgSubPixNormalized(const cv::Mat & img, cv::Point2f pt, cv::BorderTypes type)
 	{
-		return getImgSubpix<T>(img, cv::Point2f(pt.x * img.cols, pt.y *img.rows));
+		return getImgSubpix<T>(img, cv::Point2f(pt.x * img.cols, pt.y *img.rows), type);
 	}
 };
 
